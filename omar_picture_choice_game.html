@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اختار الصورة الصحيحة مع عمر</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#fff7fb;color:#382b35;font-family:Tahoma,Arial,sans-serif;line-height:1.7}
+main{max-width:760px;margin:18px auto;padding:14px}
+header,.panel{background:#fff;border:1px solid #efd6e3;border-radius:22px;padding:18px;box-shadow:0 5px 18px #71364a0d}
+header{text-align:center;background:linear-gradient(135deg,#ffe8f2,#f0eaff)}
+h1{margin:4px 0;color:#a33c70;font-size:25px}
+.sub{color:#725c6b}
+.progress{height:9px;background:#eee;border-radius:20px;overflow:hidden;margin:14px 0 5px}
+.bar{height:100%;width:0;background:#bd6592;transition:width .25s}
+.panel{margin-top:15px}
+.tag{display:inline-block;background:#fbe1ed;color:#963963;border-radius:20px;padding:3px 12px;font-size:14px}
+h2{font-size:21px;margin:12px 0}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.choice{position:relative;border:3px solid #f0dce7;background:#fff;border-radius:18px;padding:9px;cursor:pointer;min-width:0;color:inherit;font:inherit}
+.choice:focus{outline:3px solid #bd6592;outline-offset:2px}
+.choice svg{display:block;width:100%;height:auto;border-radius:12px;background:#fff5fa}
+.choice .caption{font-weight:bold;display:block;padding:7px 3px 3px}
+.choice .mark{display:none;position:absolute;top:10px;left:10px;width:36px;height:36px;border-radius:50%;background:#16864a;color:white;font-size:25px;line-height:36px;font-weight:bold}
+.choice.wrong .mark{display:block;background:#c83e3e}
+.choice.correct{border-color:#16864a;background:#effaf2}
+.choice.correct .mark{display:block}
+.choice.wrong{border-color:#c83e3e;background:#fff1f1}
+.feedback{margin-top:14px;min-height:52px;background:#f7f1f5;border-radius:13px;padding:10px;font-weight:bold}
+.next,.restart{display:block;border:0;border-radius:14px;background:#a94377;color:white;padding:12px 18px;font-size:17px;font-weight:bold;width:100%;margin-top:12px;cursor:pointer}
+.hidden{display:none}.center{text-align:center}.score{font-size:28px;color:#a33c70;font-weight:bold}
+small{color:#806f7b}
+@media(max-width:430px){main{padding:10px}.choices{gap:8px}.choice{padding:6px}.choice .caption{font-size:14px}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div style="font-size:38px">🌷👦🏻🌷</div>
+<h1>اختار الصورة الصحيحة مع عمر</h1>
+<div class="sub">شوف الصورتين واضغط على الصورة التي تعبّر عن التصرف الصحيح</div>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<small id="count">السؤال 1 من 4</small>
+</header>
+<section class="panel" id="game">
+<span class="tag" id="tag">اللعبة 1</span>
+<h2 id="question">ماذا نفعل عندما يتحدث عمر؟</h2>
+<div class="choices" id="choices"></div>
+<div class="feedback" id="feedback" aria-live="polite">اضغط على الصورة الصحيحة 😊</div>
+<button class="next hidden" id="next" onclick="advance()">السؤال التالي ←</button>
+</section>
+<section class="panel center hidden" id="result">
+<div style="font-size:48px">🏆</div>
+<h2>برافو يا بطل!</h2>
+<div class="score" id="score"></div>
+<p>أنت صديق رائع! نستمع لأصدقائنا ونشجعهم ونلعب معهم بمحبة.</p>
+<button class="restart" onclick="restart()">العب مرة أخرى</button>
+</section>
+</main>
+<script>
+const svg=(scene)=> {
+const common=`<svg viewBox="0 0 320 205" xmlns="http://www.w3.org/2000/svg" role="img">
+<rect width="320" height="205" rx="16" fill="#fff3f8"/>
+<path d="M0 165 Q80 145 160 165 T320 160 V205 H0Z" fill="#dff2e3"/>
+<rect x="18" y="18" width="72" height="55" rx="8" fill="#d8edff" stroke="#8ab9dc" stroke-width="3"/>
+<path d="M54 18V73M18 45H90" stroke="#8ab9dc" stroke-width="3"/>`;
+const boy=(x,y,shirt,face='🙂')=>`<circle cx="${x}" cy="${y}" r="23" fill="#c98b62"/><path d="M${x-23} ${y-5}q2-28 25-21q18 4 20 22q-20-12-45-1" fill="#49332d"/><path d="M${x-30} ${y+26}q30-12 60 0l8 55h-76z" fill="${shirt}"/><circle cx="${x-8}" cy="${y}" r="2.5" fill="#382b35"/><circle cx="${x+8}" cy="${y}" r="2.5" fill="#382b35"/><path d="M${x-7} ${y+10}q7 6 14 0" stroke="#713c39" stroke-width="2" fill="none"/><path d="M${x-14} ${y+80}l-4 24m38-24l5 24" stroke="#4b526b" stroke-width="7" stroke-linecap="round"/>`;
+const child=(x,y,shirt)=>`<circle cx="${x}" cy="${y}" r="21" fill="#d49a70"/><path d="M${x-21} ${y-5}q4-26 24-18q15 4 18 20" fill="#49332d"/><path d="M${x-27} ${y+24}q27-12 54 0l6 51h-66z" fill="${shirt}"/><circle cx="${x-7}" cy="${y}" r="2.5" fill="#382b35"/><circle cx="${x+7}" cy="${y}" r="2.5" fill="#382b35"/>`;
+let content='';
+if(scene==='listen') content=`${boy(105,91,'#65a8e8')}${child(220,91,'#f4b84f')}<path d="M155 67q18-20 35 0" stroke="#bd6592" stroke-width="4" fill="none"/><text x="180" y="48" font-size="19" text-anchor="middle">👂</text>`;
+if(scene==='interrupt') content=`${boy(105,91,'#65a8e8')}${child(220,91,'#f4b84f')}<path d="M140 38l20 15-20 15" stroke="#d34b4b" stroke-width="5" fill="none"/><path d="M170 25l-10 22 18-4-10 23" stroke="#d34b4b" stroke-width="4" fill="none"/>`;
+if(scene==='encourage') content=`${boy(105,91,'#65a8e8')}${child(220,91,'#f4b84f')}<path d="M140 48q25-30 50 0" stroke="#e9a23b" stroke-width="4" fill="none"/><text x="160" y="37" font-size="22" text-anchor="middle">⭐</text>`;
+if(scene==='mock') content=`${boy(105,91,'#65a8e8')}${child(220,91,'#f4b84f')}<path d="M190 35q35-28 55 0" stroke="#d34b4b" stroke-width="4" fill="none"/><text x="220" y="29" font-size="20">😝</text>`;
+if(scene==='include') content=`${boy(75,91,'#65a8e8')}${child(165,91,'#f4b84f')}${child(250,91,'#83c98b')}<circle cx="160" cy="145" r="13" fill="#e8a33a"/>`;
+if(scene==='exclude') content=`${boy(75,91,'#65a8e8')}${child(205,91,'#f4b84f')}<path d="M145 75l35 35m0-35l-35 35" stroke="#d34b4b" stroke-width="7" stroke-linecap="round"/>`;
+if(scene==='teacher') content=`${boy(95,91,'#65a8e8')}${child(220,83,'#b18ad9')}<path d="M180 48q20-25 40 0" stroke="#16864a" stroke-width="4" fill="none"/><text x="198" y="34" font-size="19" text-anchor="middle">💬</text>`;
+if(scene==='tease') content=`${boy(95,91,'#65a8e8')}${child(220,83,'#f4b84f')}<path d="M175 48l30 30m0-30l-30 30" stroke="#d34b4b" stroke-width="6" stroke-linecap="round"/>`;
+return common+content+'</svg>';
+};
+const items=[
+{q:'ماذا نفعل عندما يتحدث عمر؟',opts:[['نستمع إليه بهدوء','listen'],['نقاطعه ولا نتركه يكمل','interrupt']],correct:0,good:'أحسنت! نستمع لعمر وننتظره حتى ينتهي من كلامه.',bad:'حاول مرة أخرى. نريد أن يشعر عمر أننا نستمع إليه.'},
+{q:'كيف نشجع عمر؟',opts:[['نضحك عليه ونسخر منه','mock'],['نشجعه ونقول له: خذ وقتك','encourage']],correct:1,good:'رائع! كلمات التشجيع تجعل عمر يشعر بالدعم.',bad:'حاول مرة أخرى. لا نسخر من أصدقائنا.'},
+{q:'ماذا نفعل عندما يريد عمر أن يلعب معنا؟',opts:[['نسمح له أن يشاركنا اللعب','include'],['نرفض أن يلعب معنا','exclude']],correct:0,good:'ممتاز! كل طفل من حقه أن يشارك أصدقاءه اللعب.',bad:'فكر مرة أخرى. نرحب بعمر ونلعب معه.'},
+{q:'إذا احتاج عمر إلى مساعدة، ماذا يفعل؟',opts:[['يطلب المساعدة من المعلمة','teacher'],['يسكت ونتركه وحده','tease']],correct:0,good:'برافو! طلب المساعدة من المعلمة تصرف صحيح.',bad:'حاول مرة أخرى. يمكن لعمر أن يطلب المساعدة من المعلمة.'}
+];
+let i=0,score=0,locked=false;
+function render(){
+locked=false;document.getElementById('tag').textContent='اللعبة '+(i+1);
+document.getElementById('question').textContent=items[i].q;
+document.getElementById('count').textContent='السؤال '+(i+1)+' من 4';
+document.getElementById('bar').style.width=(i/4*100)+'%';
+document.getElementById('feedback').textContent='اضغط على الصورة الصحيحة 😊';
+document.getElementById('feedback').style.background='#f7f1f5';
+document.getElementById('next').classList.add('hidden');
+document.getElementById('choices').innerHTML=items[i].opts.map((o,n)=>`<button class="choice" onclick="choose(${n})">${svg(o[1])}<span class="caption">${o[0]}</span><span class="mark"></span></button>`).join('');
+}
+function choose(n){
+if(locked)return;
+const ok=n===items[i].correct;
+const buttons=[...document.querySelectorAll('.choice')];
+if(ok){locked=true;score++;buttons[n].classList.add('correct');buttons[n].querySelector('.mark').textContent='✓';document.getElementById('feedback').textContent='✓ '+items[i].good;document.getElementById('feedback').style.background='#e7f6eb';document.getElementById('next').classList.remove('hidden');}
+else{buttons[n].classList.add('wrong');buttons[n].querySelector('.mark').textContent='✗';document.getElementById('feedback').textContent='✗ '+items[i].bad;document.getElementById('feedback').style.background='#fff0ed';}
+}
+function advance(){if(i<3){i++;render()}else{document.getElementById('game').classList.add('hidden');document.getElementById('result').classList.remove('hidden');document.getElementById('score').textContent=score+' من 4';document.getElementById('bar').style.width='100%';document.getElementById('count').textContent='انتهت اللعبة'}}
+function restart(){i=0;score=0;document.getElementById('result').classList.add('hidden');document.getElementById('game').classList.remove('hidden');render()}
+render();
+</script>
+</body>
+</html>
